@@ -84,7 +84,8 @@
 const https = require("https");
 const fs = require("fs");
 
-function fetchDataAndWriteUsersJson() {
+function fetchUserDataAndSave() {
+  console.log("Fetching user data from the API...");
   https
     .get("https://jsonplaceholder.typicode.com/users", (response) => {
       let data = "";
@@ -95,8 +96,9 @@ function fetchDataAndWriteUsersJson() {
 
       response.on("end", () => {
         const users = JSON.parse(data);
+        console.log("User data successfully fetched.");
 
-        const usersData = users.map((user) => ({
+        const userSummary = users.map((user) => ({
           id: user.id,
           name: user.name,
           username: user.username,
@@ -105,73 +107,87 @@ function fetchDataAndWriteUsersJson() {
 
         fs.writeFileSync(
           "users.json",
-          JSON.stringify(usersData, null, 2),
+          JSON.stringify(userSummary, null, 2),
           "utf8"
         );
-        console.log("Data written to users.json");
+        console.log("User data has been saved to users.json");
       });
     })
     .on("error", (err) => {
-      console.log("Error fetching data:", err);
+      console.log("There was an error fetching the user data:", err);
     });
 }
 
-function appendCarDataToJson() {
+function addCarToCollection() {
   const carModel = process.argv[2];
-  const carReleaseDate = process.argv[3];
+  const carReleaseYear = process.argv[3];
   const carColor = process.argv[4];
 
-  if (!carModel || !carReleaseDate || !carColor) {
+  if (!carModel || !carReleaseYear || !carColor) {
     console.log(
-      "Please provide car model, release date, and color as arguments."
+      "Please provide the car model, release year, and color as arguments."
     );
     return;
   }
 
-  const car = {
+  console.log("Adding car to the collection...");
+  const carDetails = {
     id: Date.now(),
-    carModel,
-    carColor,
-    carReleaseDate,
+    model: carModel,
+    color: carColor,
+    releaseYear: carReleaseYear,
   };
 
   fs.readFile("cars.json", "utf8", (err, data) => {
     if (err && err.code === "ENOENT") {
-      fs.writeFileSync("cars.json", JSON.stringify([car], null, 2), "utf8");
+      console.log("No existing car collection found. Creating a new one...");
+      fs.writeFileSync(
+        "cars.json",
+        JSON.stringify([carDetails], null, 2),
+        "utf8"
+      );
+      console.log("The car collection has been created with the new car.");
     } else if (data) {
-      const cars = JSON.parse(data);
-      cars.push(car);
-      fs.writeFileSync("cars.json", JSON.stringify(cars, null, 2), "utf8");
+      const existingCars = JSON.parse(data);
+      existingCars.push(carDetails);
+      fs.writeFileSync(
+        "cars.json",
+        JSON.stringify(existingCars, null, 2),
+        "utf8"
+      );
+      console.log(`The ${carModel} has been added to the car collection.`);
     }
-    console.log("Car object appended to cars.json");
   });
 }
 
-function countVowelsInTextFile() {
-  const randomText = "This is some random text with vowels!";
-  fs.writeFileSync("text.txt", randomText, "utf8");
-  console.log("Random text written to text.txt");
+function writeTextAndCountVowels() {
+  const sampleText = "This is some random text with vowels!";
+  console.log("Writing random text to text.txt...");
+  fs.writeFileSync("text.txt", sampleText, "utf8");
+  console.log("Random text has been written to text.txt.");
 
-  fs.readFile("text.txt", "utf8", (err, data) => {
+  fs.readFile("text.txt", "utf8", (err, text) => {
     if (err) throw err;
 
     const vowels = ["a", "e", "i", "o", "u"];
     let vowelCount = 0;
 
-    for (let char of data.toLowerCase()) {
+    for (let char of text.toLowerCase()) {
       if (vowels.includes(char)) {
         vowelCount++;
       }
     }
 
-    console.log(`Vowel count: ${vowelCount}`);
+    console.log(`The text contains ${vowelCount} vowels.`);
   });
 }
 
 function runAllTasks() {
-  fetchDataAndWriteUsersJson();
-  appendCarDataToJson();
-  countVowelsInTextFile();
+  console.log("Starting all tasks...");
+  fetchUserDataAndSave();
+  addCarToCollection();
+  writeTextAndCountVowels();
+  console.log("All tasks completed.");
 }
 
 runAllTasks();
