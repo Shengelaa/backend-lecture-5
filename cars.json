@@ -10,5 +10,11 @@
     "model": "Ferrari",
     "color": "red",
     "releaseYear": "2020"
+  },
+  {
+    "id": 1733065794244,
+    "model": "Buggati",
+    "color": "black",
+    "releaseYear": "2012"
   }
 ]
