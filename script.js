@@ -66,17 +66,112 @@
 //   await fs.writeFile("first.txt", ar);
 // }
 
-const [, , firstName, age] = process.argv;
-const fs = require("fs/promises");
-async function main() {
-  const users = await fs.readFile("users.json", "utf-8");
-  const parseUsers = JSON.parse(users);
-  const user = {
-    name: firstName,
-    age: age,
-  };
-  parseUsers.push(user);
-  await fs.writeFile("users.json", JSON.stringify(parseUsers));
+// const [, , firstName, age] = process.argv;
+// const fs = require("fs/promises");
+// async function main() {
+//   const users = await fs.readFile("users.json", "utf-8");
+//   const parseUsers = JSON.parse(users);
+//   const user = {
+//     name: firstName,
+//     age: age,
+//   };
+//   parseUsers.push(user);
+//   await fs.writeFile("users.json", JSON.stringify(parseUsers));
+// }
+
+// main();
+
+const https = require("https");
+const fs = require("fs");
+
+function fetchDataAndWriteUsersJson() {
+  https
+    .get("https://jsonplaceholder.typicode.com/users", (response) => {
+      let data = "";
+
+      response.on("data", (chunk) => {
+        data += chunk;
+      });
+
+      response.on("end", () => {
+        const users = JSON.parse(data);
+
+        const usersData = users.map((user) => ({
+          id: user.id,
+          name: user.name,
+          username: user.username,
+          email: user.email,
+        }));
+
+        fs.writeFileSync(
+          "users.json",
+          JSON.stringify(usersData, null, 2),
+          "utf8"
+        );
+        console.log("Data written to users.json");
+      });
+    })
+    .on("error", (err) => {
+      console.log("Error fetching data:", err);
+    });
 }
 
-main();
+function appendCarDataToJson() {
+  const carModel = process.argv[2];
+  const carReleaseDate = process.argv[3];
+  const carColor = process.argv[4];
+
+  if (!carModel || !carReleaseDate || !carColor) {
+    console.log(
+      "Please provide car model, release date, and color as arguments."
+    );
+    return;
+  }
+
+  const car = {
+    id: Date.now(),
+    carModel,
+    carColor,
+    carReleaseDate,
+  };
+
+  fs.readFile("cars.json", "utf8", (err, data) => {
+    if (err && err.code === "ENOENT") {
+      fs.writeFileSync("cars.json", JSON.stringify([car], null, 2), "utf8");
+    } else if (data) {
+      const cars = JSON.parse(data);
+      cars.push(car);
+      fs.writeFileSync("cars.json", JSON.stringify(cars, null, 2), "utf8");
+    }
+    console.log("Car object appended to cars.json");
+  });
+}
+
+function countVowelsInTextFile() {
+  const randomText = "This is some random text with vowels!";
+  fs.writeFileSync("text.txt", randomText, "utf8");
+  console.log("Random text written to text.txt");
+
+  fs.readFile("text.txt", "utf8", (err, data) => {
+    if (err) throw err;
+
+    const vowels = ["a", "e", "i", "o", "u"];
+    let vowelCount = 0;
+
+    for (let char of data.toLowerCase()) {
+      if (vowels.includes(char)) {
+        vowelCount++;
+      }
+    }
+
+    console.log(`Vowel count: ${vowelCount}`);
+  });
+}
+
+function runAllTasks() {
+  fetchDataAndWriteUsersJson();
+  appendCarDataToJson();
+  countVowelsInTextFile();
+}
+
+runAllTasks();
